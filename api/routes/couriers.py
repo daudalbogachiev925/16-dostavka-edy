@@ -23,3 +23,16 @@ def create(data: CIn, db: Session = Depends(get_session)):
 
 @router.post("/{courier_id}/location")
 def update_location(courier_id: int, lat: float, lon: float, db: Session = Depends(get_session)):
+    db.execute(text("UPDATE couriers SET lat=:lat, lon=:lon WHERE id=:i"),
+               {"lat": lat, "lon": lon, "i": courier_id})
+    db.commit()
+    return {"status": "updated"}
+
+@router.get("/")
+def list_all(available: bool | None = None, db: Session = Depends(get_session)):
+    sql = "SELECT * FROM couriers"
+    params = {}
+    if available is not None:
+        sql += " WHERE available = :a"
+        params['a'] = available
+    return [dict(r._mapping) for r in db.execute(text(sql), params).fetchall()]
